@@ -74,7 +74,7 @@ docker pull workerspages/qinglong-datatos3:latest
 ```bash
 docker run -d \
   --name qinglong \
-  -p 8080:8080 \
+  -p 5700:5700 \
   -e STORAGE_TYPE=s3 \
   -e S3_ENDPOINT=https://xxx.r2.cloudflarestorage.com \
   -e S3_ACCESS_KEY=your-access-key \
@@ -91,7 +91,7 @@ docker run -d \
 ```bash
 docker run -d \
   --name qinglong \
-  -p 8080:8080 \
+  -p 5700:5700 \
   -e STORAGE_TYPE=webdav \
   -e WEBDAV_URL=https://dav.jianguoyun.com/dav \
   -e WEBDAV_USER=your-email \
@@ -114,7 +114,7 @@ docker compose up -d
 在 PaaS 平台（如 Railway、Render、Fly.io 等）部署时，设置对应的环境变量即可：
 
 1. 设置镜像为 `ghcr.io/workerspages/qinglong-datatos3:latest`
-2. 配置端口映射: `8080 → 8080` (或直接暴露 `8080`)
+2. 配置端口映射: `5700 → 5700` (或直接暴露 `5700`)
 3. 添加上述环境变量（根据存储类型选择 S3 或 WebDAV 的变量）
 4. 首次启动后访问面板完成初始化设置
 
