@@ -5,7 +5,7 @@ LABEL description="青龙面板 - S3/WebDAV 数据持久化版"
 
 # 安装 rclone 和依赖
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends rclone ca-certificates fuse && \
+    apt-get install -y --no-install-recommends rclone ca-certificates fuse socat && \
     rm -rf /var/lib/apt/lists/*
 
 # 复制同步脚本
