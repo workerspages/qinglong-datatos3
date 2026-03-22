@@ -1,4 +1,4 @@
-FROM whyour/qinglong:debian
+FROM whyour/qinglong:latest
 
 LABEL maintainer="workerspages"
 LABEL description="青龙面板 - S3/WebDAV 数据持久化版"
