@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  qinglong:
+    image: ghcr.io/workerspages/qinglong-datatos3:latest
+    container_name: qinglong
+    restart: unless-stopped
+    ports:
+      - "8080:5700"
+    environment:
+      # --- 存储类型 (必填): s3 或 webdav ---
+      - STORAGE_TYPE=s3
+
+      # --- 同步间隔 (分钟, 默认 5) ---
+      - SYNC_INTERVAL=5
+
+      # === S3 配置 (STORAGE_TYPE=s3 时使用) ===
+      - S3_ENDPOINT=https://your-s3-endpoint.com
+      - S3_ACCESS_KEY=your-access-key
+      - S3_SECRET_KEY=your-secret-key
+      - S3_BUCKET=your-bucket-name
+      - S3_REGION=us-east-1
+      - S3_PATH=qinglong
+
+      # === WebDAV 配置 (STORAGE_TYPE=webdav 时使用) ===
+      # - WEBDAV_URL=https://your-webdav-server.com/dav
+      # - WEBDAV_USER=your-username
+      # - WEBDAV_PASS=your-password
+      # - WEBDAV_VENDOR=other
+      # - WEBDAV_PATH=qinglong
