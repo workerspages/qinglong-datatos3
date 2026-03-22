@@ -272,51 +272,6 @@ backup_data() {
 }
 
 # ============================================================================
-# 安装 cron 定时任务
-# ============================================================================
-
-setup_cron() {
-    local interval="${SYNC_INTERVAL}"
-    log_info "设置定时备份 (间隔: ${interval} 分钟)..."
-
-    # 导出所有需要的环境变量到文件，供 cron 使用
-    local env_file="/tmp/sync_env.sh"
-    cat > "${env_file}" <<EOF
-export STORAGE_TYPE="${STORAGE_TYPE}"
-export S3_ENDPOINT="${S3_ENDPOINT}"
-export S3_ACCESS_KEY="${S3_ACCESS_KEY}"
-export S3_SECRET_KEY="${S3_SECRET_KEY}"
-export S3_BUCKET="${S3_BUCKET}"
-export S3_REGION="${S3_REGION}"
-export S3_PATH="${S3_PATH}"
-export WEBDAV_URL="${WEBDAV_URL}"
-export WEBDAV_USER="${WEBDAV_USER}"
-export WEBDAV_PASS="${WEBDAV_PASS}"
-export WEBDAV_VENDOR="${WEBDAV_VENDOR}"
-export WEBDAV_PATH="${WEBDAV_PATH}"
-export ENCRYPT_PASSWORD="${ENCRYPT_PASSWORD}"
-export ENCRYPT_SALT="${ENCRYPT_SALT}"
-export SYNC_INTERVAL="${SYNC_INTERVAL}"
-export PATH="${PATH}"
-EOF
-    chmod 600 "${env_file}"
-
-    # 创建 cron 任务
-    local cron_script="/usr/local/bin/sync-cron.sh"
-    cat > "${cron_script}" <<'CRONEOF'
-#!/bin/bash
-source /tmp/sync_env.sh
-/usr/local/bin/sync.sh backup >> /var/log/sync.log 2>&1
-CRONEOF
-    chmod +x "${cron_script}"
-
-    # 添加到 crontab
-    echo "*/${interval} * * * * ${cron_script}" | crontab -
-
-    log_info "cron 定时任务已设置"
-}
-
-# ============================================================================
 # 主入口
 # ============================================================================
 
@@ -334,23 +289,12 @@ main() {
         backup)
             backup_data
             ;;
-        setup-cron)
-            setup_cron
-            ;;
-        init)
-            # 完整初始化流程：配置 → 恢复 → 设置 cron
-            configure_rclone
-            restore_data
-            setup_cron
-            ;;
         *)
-            echo "用法: $0 {configure|restore|backup|setup-cron|init}"
+            echo "用法: $0 {configure|restore|backup}"
             echo ""
             echo "  configure  - 配置 rclone"
-            echo "  restore    - 从远端恢复数据"
+            echo "  restore    - 从远端恢复数据（含自动配置）"
             echo "  backup     - 备份数据到远端"
-            echo "  setup-cron - 设置定时备份 cron 任务"
-            echo "  init       - 完整初始化（配置 + 恢复 + cron）"
             return 1
             ;;
     esac
