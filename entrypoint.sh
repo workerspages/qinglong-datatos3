@@ -91,6 +91,12 @@ log_info "========================================"
 # 1. 初始化数据同步 + 启动后台备份
 init_sync
 
-# 2. 启动青龙面板原始入口
+# 2. 更改 Nginx 端口配置以满足 8080 的 CloudFlare 兼容要求
+log_info "更改 Nginx 默认端口从 5700 到 8080..."
+if [ -d "/etc/nginx/conf.d" ]; then
+    find /etc/nginx/conf.d -name "*.conf" -type f -exec sed -i 's/5700/8080/g' {} +
+fi
+
+# 3. 启动青龙面板原始入口
 log_info "启动青龙面板..."
 exec /ql/docker/docker-entrypoint.sh "$@"

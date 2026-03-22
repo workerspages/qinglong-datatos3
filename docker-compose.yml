@@ -6,7 +6,7 @@ services:
     container_name: qinglong
     restart: unless-stopped
     ports:
-      - "8080:5700"
+      - "8080:8080"
     environment:
       # --- 存储类型 (必填): s3 或 webdav ---
       - STORAGE_TYPE=s3
