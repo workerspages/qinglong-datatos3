@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================================
 # sync.sh - 青龙面板数据同步脚本
-# 支持 S3 和 WebDAV 两种存储后端
+# 支持 S3 和 WebDAV 两种存储后端，可选 AES-256 加密
 # 使用 rclone 实现数据的备份/恢复
 # ============================================================================
 
@@ -10,6 +10,7 @@ set -euo pipefail
 # --- 常量定义 ---
 RCLONE_CONF="/root/.config/rclone/rclone.conf"
 REMOTE_NAME="remote"
+CRYPT_REMOTE_NAME="encrypted"
 QL_DATA_DIR="/ql/data"
 LOCK_FILE="/tmp/sync.lock"
 LOG_PREFIX="[SYNC]"
@@ -33,6 +34,10 @@ WEBDAV_PASS="${WEBDAV_PASS:-}"
 WEBDAV_VENDOR="${WEBDAV_VENDOR:-other}"
 WEBDAV_PATH="${WEBDAV_PATH:-qinglong}"
 
+# 加密配置
+ENCRYPT_PASSWORD="${ENCRYPT_PASSWORD:-}"
+ENCRYPT_SALT="${ENCRYPT_SALT:-}"
+
 # ============================================================================
 # 工具函数
 # ============================================================================
@@ -49,20 +54,31 @@ log_error() {
     echo "${LOG_PREFIX} [$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] $*" >&2
 }
 
+# 判断是否启用加密
+is_encrypt_enabled() {
+    [[ -n "${ENCRYPT_PASSWORD}" ]]
+}
+
 # 获取远端路径
 get_remote_path() {
-    case "${STORAGE_TYPE}" in
-        s3)
-            echo "${REMOTE_NAME}:${S3_BUCKET}/${S3_PATH}"
-            ;;
-        webdav)
-            echo "${REMOTE_NAME}:${WEBDAV_PATH}"
-            ;;
-        *)
-            log_error "未知的存储类型: ${STORAGE_TYPE}"
-            return 1
-            ;;
-    esac
+    if is_encrypt_enabled; then
+        # 加密模式：使用 crypt 远端（路径已在 crypt 配置中指定）
+        echo "${CRYPT_REMOTE_NAME}:"
+    else
+        # 非加密模式：直接使用基础远端
+        case "${STORAGE_TYPE}" in
+            s3)
+                echo "${REMOTE_NAME}:${S3_BUCKET}/${S3_PATH}"
+                ;;
+            webdav)
+                echo "${REMOTE_NAME}:${WEBDAV_PATH}"
+                ;;
+            *)
+                log_error "未知的存储类型: ${STORAGE_TYPE}"
+                return 1
+                ;;
+        esac
+    fi
 }
 
 # ============================================================================
@@ -123,8 +139,51 @@ EOF
             ;;
     esac
 
+    # 配置加密层（如果启用）
+    if is_encrypt_enabled; then
+        log_info "加密已启用，配置 crypt 远端..."
+        local base_path
+        case "${STORAGE_TYPE}" in
+            s3)
+                base_path="${REMOTE_NAME}:${S3_BUCKET}/${S3_PATH}"
+                ;;
+            webdav)
+                base_path="${REMOTE_NAME}:${WEBDAV_PATH}"
+                ;;
+        esac
+
+        local obscured_encrypt_pass
+        obscured_encrypt_pass=$(rclone obscure "${ENCRYPT_PASSWORD}")
+
+        # 追加 crypt 远端配置
+        cat >> "${RCLONE_CONF}" <<EOF
+
+[${CRYPT_REMOTE_NAME}]
+type = crypt
+remote = ${base_path}
+password = ${obscured_encrypt_pass}
+filename_encryption = standard
+directory_name_encryption = true
+EOF
+
+        # 如果提供了 salt，添加 password2
+        if [[ -n "${ENCRYPT_SALT}" ]]; then
+            local obscured_salt
+            obscured_salt=$(rclone obscure "${ENCRYPT_SALT}")
+            echo "password2 = ${obscured_salt}" >> "${RCLONE_CONF}"
+        fi
+
+        log_info "加密配置完成 (文件名加密: standard, 目录名加密: true)"
+    else
+        log_info "加密未启用（如需启用，请设置 ENCRYPT_PASSWORD 环境变量）"
+    fi
+
     # 验证配置
-    if rclone listremotes --config "${RCLONE_CONF}" | grep -q "${REMOTE_NAME}:"; then
+    local check_remote="${REMOTE_NAME}"
+    if is_encrypt_enabled; then
+        check_remote="${CRYPT_REMOTE_NAME}"
+    fi
+    if rclone listremotes --config "${RCLONE_CONF}" | grep -q "${check_remote}:"; then
         log_info "rclone 配置验证通过"
     else
         log_error "rclone 配置验证失败"
@@ -235,6 +294,8 @@ export WEBDAV_USER="${WEBDAV_USER}"
 export WEBDAV_PASS="${WEBDAV_PASS}"
 export WEBDAV_VENDOR="${WEBDAV_VENDOR}"
 export WEBDAV_PATH="${WEBDAV_PATH}"
+export ENCRYPT_PASSWORD="${ENCRYPT_PASSWORD}"
+export ENCRYPT_SALT="${ENCRYPT_SALT}"
 export SYNC_INTERVAL="${SYNC_INTERVAL}"
 export PATH="${PATH}"
 EOF

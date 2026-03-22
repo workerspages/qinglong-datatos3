@@ -28,3 +28,7 @@ services:
       # - WEBDAV_PASS=your-password
       # - WEBDAV_VENDOR=other
       # - WEBDAV_PATH=qinglong
+
+      # === 加密配置 (可选, 设置 ENCRYPT_PASSWORD 即启用 AES-256 加密) ===
+      - ENCRYPT_PASSWORD=your-strong-encryption-password
+      - ENCRYPT_SALT=your-random-salt

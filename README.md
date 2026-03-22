@@ -2,7 +2,7 @@
 
 [![Docker Build](https://github.com/workerspages/qinglong-datatos3/actions/workflows/docker-build.yml/badge.svg)](https://github.com/workerspages/qinglong-datatos3/actions/workflows/docker-build.yml)
 
-基于 [青龙面板](https://github.com/whyour/qinglong) 官方镜像，支持将数据自动同步到 **S3 存储桶** 或 **WebDAV 网盘**，适用于没有持久化存储卷的 PaaS 平台。
+基于 [青龙面板](https://github.com/whyour/qinglong) 官方镜像，支持将数据**加密**后自动同步到 **S3 存储桶** 或 **WebDAV 网盘**，适用于没有持久化存储卷的 PaaS 平台。
 
 ## 工作原理
 
@@ -13,6 +13,7 @@
 1. **启动时恢复**: 容器启动时使用 `rclone copy` 从远端拉取数据到 `/ql/data`
 2. **定时备份**: 通过 cron 定时使用 `rclone sync` 将数据同步到远端
 3. **优雅关闭**: 容器关闭时自动执行最后一次备份
+4. **数据加密**: 可选 AES-256 加密，文件名和内容均加密后再上传
 
 ## 镜像地址
 
@@ -52,6 +53,20 @@ docker pull workerspages/qinglong-datatos3:latest
 | `WEBDAV_VENDOR` | ❌ | 供应商类型 (`nextcloud`/`owncloud`/`other`) | `other` |
 | `WEBDAV_PATH` | ❌ | 远端子路径 | `qinglong` |
 
+### 加密配置（可选）
+
+设置 `ENCRYPT_PASSWORD` 即可启用 AES-256 加密，数据在上传前会被自动加密（文件名 + 文件内容），下载时自动解密。
+
+| 变量名 | 必填 | 说明 | 默认值 |
+|--------|------|------|--------|
+| `ENCRYPT_PASSWORD` | ❌ | 加密密码（设置后启用加密） | - |
+| `ENCRYPT_SALT` | ❌ | 加密盐值（增强安全性） | - |
+
+> ⚠️ **重要安全提示**：
+> - 加密密码一旦设置后**不可更改或丢失**，否则已加密的备份数据将无法解密
+> - 建议同时设置 `ENCRYPT_PASSWORD` 和 `ENCRYPT_SALT` 以获得最强安全性
+> - 首次启用加密时，远端应为空目录；不能对已有的未加密备份直接启用加密
+
 ## 快速部署
 
 ### 使用 S3（Cloudflare R2 / MinIO / AWS S3 等）
@@ -65,6 +80,8 @@ docker run -d \
   -e S3_ACCESS_KEY=your-access-key \
   -e S3_SECRET_KEY=your-secret-key \
   -e S3_BUCKET=your-bucket \
+  -e ENCRYPT_PASSWORD=your-strong-encryption-password \
+  -e ENCRYPT_SALT=your-random-salt \
   -e SYNC_INTERVAL=5 \
   ghcr.io/workerspages/qinglong-datatos3:latest
 ```
@@ -80,6 +97,7 @@ docker run -d \
   -e WEBDAV_USER=your-email \
   -e WEBDAV_PASS=your-app-password \
   -e WEBDAV_VENDOR=other \
+  -e ENCRYPT_PASSWORD=your-strong-encryption-password \
   -e SYNC_INTERVAL=10 \
   ghcr.io/workerspages/qinglong-datatos3:latest
 ```
