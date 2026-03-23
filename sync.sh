@@ -210,6 +210,15 @@ restore_data() {
     if rclone lsf "${remote_path}" --config "${RCLONE_CONF}" --max-depth 1 2>/dev/null | head -1 | grep -q .; then
         log_info "远端存在数据，正在恢复..."
         if rclone copy "${remote_path}" "${QL_DATA_DIR}" \
+            --exclude "log/**" \
+            --exclude "node_modules/**" \
+            --exclude ".npm/**" \
+            --exclude ".pnpm-store/**" \
+            --exclude ".cache/**" \
+            --timeout 10m \
+            --contimeout 2m \
+            --retries 3 \
+            --retries-sleep 5s \
             --config "${RCLONE_CONF}" \
             --transfers 4 \
             --checkers 8 \
@@ -254,6 +263,15 @@ backup_data() {
     log_info "远端路径: ${remote_path}"
 
     if rclone sync "${QL_DATA_DIR}" "${remote_path}" \
+        --exclude "log/**" \
+        --exclude "node_modules/**" \
+        --exclude ".npm/**" \
+        --exclude ".pnpm-store/**" \
+        --exclude ".cache/**" \
+        --timeout 10m \
+        --contimeout 2m \
+        --retries 3 \
+        --retries-sleep 5s \
         --config "${RCLONE_CONF}" \
         --transfers 4 \
         --checkers 8 \
