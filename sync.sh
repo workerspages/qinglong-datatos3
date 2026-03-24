@@ -193,7 +193,7 @@ EOF
     if is_encrypt_enabled; then
         check_remote="${CRYPT_REMOTE_NAME}"
     fi
-    if rclone listremotes --config "${RCLONE_CONF}" | grep -q "${check_remote}:"; then
+    if rclone listremotes --config "${RCLONE_CONF}" | grep "^${check_remote}:" > /dev/null; then
         log_info "rclone 配置验证通过"
     else
         log_error "rclone 配置验证失败"
