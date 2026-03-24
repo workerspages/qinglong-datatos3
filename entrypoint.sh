@@ -64,24 +64,6 @@ init_sync() {
     log_info "========================================="
 }
 
-# --- 容器关闭时的优雅处理 ---
-graceful_shutdown() {
-    log_info "收到关闭信号，执行最后一次数据备份..."
-
-    # 停止后台备份循环
-    if [[ -n "${BACKUP_PID:-}" ]] && kill -0 "${BACKUP_PID}" 2>/dev/null; then
-        kill "${BACKUP_PID}" 2>/dev/null || true
-    fi
-
-    if [[ -n "${STORAGE_TYPE:-}" ]]; then
-        /usr/local/bin/sync.sh backup || log_warn "关闭前的备份失败"
-    fi
-    log_info "数据备份完成，正在关闭..."
-    exit 0
-}
-
-# 捕获关闭信号
-trap graceful_shutdown SIGTERM SIGINT SIGHUP
 
 # --- 主流程 ---
 log_info "========================================"
@@ -95,8 +77,4 @@ init_sync
 
 # 3. 启动青龙面板原始入口
 log_info "启动青龙面板..."
-/ql/docker/docker-entrypoint.sh "$@" &
-QL_PID=$!
-
-# 阻塞等待，此时主进程 bash 可响应 SIGTERM 并在 graceful_shutdown 中执行备份
-wait ${QL_PID}
+exec /ql/docker/docker-entrypoint.sh "$@"
