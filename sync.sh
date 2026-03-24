@@ -215,8 +215,6 @@ restore_data() {
             --exclude ".npm/**" \
             --exclude ".pnpm-store/**" \
             --exclude ".cache/**" \
-            --exclude "*.sqlite-wal" \
-            --exclude "*.sqlite-shm" \
             --timeout 10m \
             --contimeout 2m \
             --retries 3 \
@@ -281,8 +279,6 @@ backup_data() {
         --exclude ".npm/**" \
         --exclude ".pnpm-store/**" \
         --exclude ".cache/**" \
-        --exclude "*.sqlite-wal" \
-        --exclude "*.sqlite-shm" \
         --timeout 10m \
         --contimeout 2m \
         --retries 3 \
