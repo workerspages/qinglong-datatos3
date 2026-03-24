@@ -211,10 +211,13 @@ restore_data() {
         log_info "远端存在数据，正在恢复..."
         if rclone copy "${remote_path}" "${QL_DATA_DIR}" \
             --exclude "log/**" \
-            --exclude "node_modules/**" \
-            --exclude ".npm/**" \
-            --exclude ".pnpm-store/**" \
-            --exclude ".cache/**" \
+            --exclude "**/node_modules/**" \
+            --exclude "**/.npm/**" \
+            --exclude "**/.pnpm-store/**" \
+            --exclude "**/.cache/**" \
+            --exclude "**/.git/**" \
+            --exclude "**/.github/**" \
+            --exclude "**/__pycache__/**" \
             --timeout 10m \
             --contimeout 2m \
             --retries 3 \
@@ -275,10 +278,13 @@ backup_data() {
 
     if rclone sync "${QL_DATA_DIR}" "${remote_path}" \
         --exclude "log/**" \
-        --exclude "node_modules/**" \
-        --exclude ".npm/**" \
-        --exclude ".pnpm-store/**" \
-        --exclude ".cache/**" \
+        --exclude "**/node_modules/**" \
+        --exclude "**/.npm/**" \
+        --exclude "**/.pnpm-store/**" \
+        --exclude "**/.cache/**" \
+        --exclude "**/.git/**" \
+        --exclude "**/.github/**" \
+        --exclude "**/__pycache__/**" \
         --timeout 10m \
         --contimeout 2m \
         --retries 3 \
