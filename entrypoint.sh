@@ -95,4 +95,8 @@ init_sync
 
 # 3. 启动青龙面板原始入口
 log_info "启动青龙面板..."
-exec /ql/docker/docker-entrypoint.sh "$@"
+/ql/docker/docker-entrypoint.sh "$@" &
+QL_PID=$!
+
+# 阻塞等待，此时主进程 bash 可响应 SIGTERM 并在 graceful_shutdown 中执行备份
+wait ${QL_PID}

@@ -215,6 +215,8 @@ restore_data() {
             --exclude ".npm/**" \
             --exclude ".pnpm-store/**" \
             --exclude ".cache/**" \
+            --exclude "*.sqlite-wal" \
+            --exclude "*.sqlite-shm" \
             --timeout 10m \
             --contimeout 2m \
             --retries 3 \
@@ -262,12 +264,25 @@ backup_data() {
     log_info "本地路径: ${QL_DATA_DIR}"
     log_info "远端路径: ${remote_path}"
 
+    # 强制 SQLite 触发 WAL Checkpoint，防止因 WAL 机制导致从 .sqlite-wal 备份不同步
+    # 利用系统中必定包含的 python3 和 sqlite3 标准库完成
+    if command -v python3 >/dev/null 2>&1; then
+        for db in "${QL_DATA_DIR}/db/"*.sqlite "${QL_DATA_DIR}/db/"*.db; do
+            if [[ -f "$db" ]]; then
+                python3 -c "import sqlite3; con = sqlite3.connect('$db'); con.execute('PRAGMA wal_checkpoint(TRUNCATE)'); con.close()" 2>/dev/null || true
+            fi
+        done
+        log_info "已触发所有 SQLite 数据库的 WAL Checkpoint"
+    fi
+
     if rclone sync "${QL_DATA_DIR}" "${remote_path}" \
         --exclude "log/**" \
         --exclude "node_modules/**" \
         --exclude ".npm/**" \
         --exclude ".pnpm-store/**" \
         --exclude ".cache/**" \
+        --exclude "*.sqlite-wal" \
+        --exclude "*.sqlite-shm" \
         --timeout 10m \
         --contimeout 2m \
         --retries 3 \
