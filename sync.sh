@@ -197,6 +197,11 @@ EOF
         log_info "rclone 配置验证通过"
     else
         log_error "rclone 配置验证失败"
+        log_info "=== 调试信息开始 [rclone.conf] ==="
+        sed 's/access_key_id = .*/access_key_id = ****/g; s/secret_access_key = .*/secret_access_key = ****/g; s/pass = .*/pass = ****/g; s/password = .*/password = ****/g; s/password2 = .*/password2 = ****/g' "${RCLONE_CONF}" || true
+        log_info "=== 调试信息开始 [listremotes] ==="
+        rclone listremotes --config "${RCLONE_CONF}" || true
+        log_info "=== 调试信息结束 ==="
         return 1
     fi
 }
