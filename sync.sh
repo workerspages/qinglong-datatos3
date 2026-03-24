@@ -15,28 +15,38 @@ QL_DATA_DIR="/ql/data"
 LOCK_FILE="/tmp/sync.lock"
 LOG_PREFIX="[SYNC]"
 
+# ============================================================================
+# 环境变量安全清理函数 (防止 PaaS UI 粘贴带来 \r \n 等不可见字符)
+# ============================================================================
+trim_string() {
+    echo "$1" | tr -d '\r\n\t '
+}
+trim_password() {
+    echo "$1" | tr -d '\r\n'
+}
+
 # --- 环境变量默认值 ---
-STORAGE_TYPE="${STORAGE_TYPE:-}"
-SYNC_INTERVAL="${SYNC_INTERVAL:-5}"
+STORAGE_TYPE=$(trim_string "${STORAGE_TYPE:-}")
+SYNC_INTERVAL=$(trim_string "${SYNC_INTERVAL:-5}")
 
 # S3 配置
-S3_ENDPOINT="${S3_ENDPOINT:-}"
-S3_ACCESS_KEY="${S3_ACCESS_KEY:-}"
-S3_SECRET_KEY="${S3_SECRET_KEY:-}"
-S3_BUCKET="${S3_BUCKET:-}"
-S3_REGION="${S3_REGION:-us-east-1}"
-S3_PATH="${S3_PATH:-qinglong}"
+S3_ENDPOINT=$(trim_string "${S3_ENDPOINT:-}")
+S3_ACCESS_KEY=$(trim_string "${S3_ACCESS_KEY:-}")
+S3_SECRET_KEY=$(trim_string "${S3_SECRET_KEY:-}")
+S3_BUCKET=$(trim_string "${S3_BUCKET:-}")
+S3_REGION=$(trim_string "${S3_REGION:-us-east-1}")
+S3_PATH=$(trim_string "${S3_PATH:-qinglong}")
 
 # WebDAV 配置
-WEBDAV_URL="${WEBDAV_URL:-}"
-WEBDAV_USER="${WEBDAV_USER:-}"
-WEBDAV_PASS="${WEBDAV_PASS:-}"
-WEBDAV_VENDOR="${WEBDAV_VENDOR:-other}"
-WEBDAV_PATH="${WEBDAV_PATH:-qinglong}"
+WEBDAV_URL=$(trim_string "${WEBDAV_URL:-}")
+WEBDAV_USER=$(trim_string "${WEBDAV_USER:-}")
+WEBDAV_PASS=$(trim_password "${WEBDAV_PASS:-}")
+WEBDAV_VENDOR=$(trim_string "${WEBDAV_VENDOR:-other}")
+WEBDAV_PATH=$(trim_string "${WEBDAV_PATH:-qinglong}")
 
 # 加密配置
-ENCRYPT_PASSWORD="${ENCRYPT_PASSWORD:-}"
-ENCRYPT_SALT="${ENCRYPT_SALT:-}"
+ENCRYPT_PASSWORD=$(trim_password "${ENCRYPT_PASSWORD:-}")
+ENCRYPT_SALT=$(trim_password "${ENCRYPT_SALT:-}")
 
 # ============================================================================
 # 工具函数
