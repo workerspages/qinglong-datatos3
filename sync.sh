@@ -222,7 +222,7 @@ restore_data() {
     mkdir -p "${QL_DATA_DIR}"
 
     # 检查远端是否有数据
-    if rclone lsf "${remote_path}" --config "${RCLONE_CONF}" --max-depth 1 2>/dev/null | head -1 | grep -q .; then
+    if rclone lsf "${remote_path}" --config "${RCLONE_CONF}" --max-depth 1 2>/dev/null | grep "." > /dev/null; then
         log_info "远端存在数据，正在恢复..."
         if rclone copy "${remote_path}" "${QL_DATA_DIR}" \
             --exclude "log/**" \
