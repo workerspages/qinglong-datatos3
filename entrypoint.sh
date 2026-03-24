@@ -30,8 +30,11 @@ backup_loop() {
     while true; do
         sleep "${interval_seconds}"
         log_info "定时备份触发..."
-        /usr/local/bin/sync.sh backup >> /var/log/sync.log 2>&1 || \
+        if /usr/local/bin/sync.sh backup >> /var/log/sync.log 2>&1; then
+            log_info "定时备份完成！(耗时明细见 /var/log/sync.log)"
+        else
             log_warn "定时备份执行失败，将在下一周期重试"
+        fi
     done
 }
 
